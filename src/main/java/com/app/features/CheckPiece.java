@@ -16,6 +16,7 @@ public class CheckPiece {
             System.out.println("2.Wykonaj analize dostepych pol");
             System.out.println("3.Zapisz tablice i wyjdz");
             System.out.println("4.Dodaj pionki");
+            System.out.println("5.Wyjdz bez zapisu");
             String input = scanner.nextLine();
             switch (input) {
                 case "1":
@@ -35,6 +36,8 @@ public class CheckPiece {
                     int randomIdx = ThreadLocalRandom.current().nextInt(0, 64);
                     board.setPieceTo( randomIdx, piece);
                     break;
+                case "5":
+                    return;
                 default:
                     System.out.println("Nieprawidlowa opcja");
             }

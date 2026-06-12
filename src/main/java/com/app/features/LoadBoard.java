@@ -10,6 +10,7 @@ public class LoadBoard {
         System.out.println("Podaj siezke do zaladowania pliku");
         String input = scanner.nextLine();
         Board board = savedBoard.loadBoard(input);
+        if (board == null) return;
         Count counter = new Count();
         System.out.println(board);
         CheckPiece.checkPiece(scanner, board, counter, savedBoard);
