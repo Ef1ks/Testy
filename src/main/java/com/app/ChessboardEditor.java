@@ -26,13 +26,13 @@ class ChessboardEditor {
 
     public void createNewBoard() {
         this.currentBoard = new Chessboard();
-        System.out.println("[Editor] Inicjalizacja nowej, czystej planszy.");
+        System.out.println("Inicjalizacja nowej, czystej planszy.");
     }
 
     public void loadBoard(String path) throws IOException {
-        System.out.println("[Editor] Próba odczytu planszy z pliku: " + path);
+        System.out.println("Próba odczytu planszy z pliku: " + path);
         this.currentBoard = chessboardReader.load(path);
-        System.out.println("[Editor] Sukces odczytu! " + currentBoard);
+        System.out.println("Sukces odczytu! " + currentBoard);
     }
 
     public void placePiece(int row, int col, String pieceType) {
@@ -40,24 +40,24 @@ class ChessboardEditor {
         try {
             Position pos = new Position(row, col);
             currentBoard.addPiece(pos, pieceType);
-            System.out.println("[Editor] Dodano: " + pieceType + " na " + pos);
+            System.out.println("Dodano: " + pieceType + " na " + pos);
         } catch (IllegalArgumentException | IllegalStateException e) {
-            System.out.println("[PRZECHWYCONY BŁĄD WALIDACJI] " + e.getMessage());
+            System.out.println("BLAD WALIDACJI " + e.getMessage());
         }
     }
 
     public void executeAnalysis() {
         if (currentBoard == null) return;
-        System.out.println("[Editor] Wywoływanie algorytmów analitycznych...");
+        System.out.println("Wywoływanie algorytmów analitycznych...");
         int count = attackCounter.count(currentBoard);
         List<Position> fields = attackCalculator.calculateAttack(currentBoard);
-        System.out.println("[WYNIK] Liczba atakowanych pól: " + count + " | Lokalizacje: " + fields);
+        System.out.println("Liczba atakowanych pól: " + count + " | Lokalizacje: " + fields);
     }
 
     public void saveBoard(String path) throws IOException {
         if (currentBoard == null) return;
-        System.out.println("[Editor] Próba zapisu planszy pod ścieżkę: " + path);
+        System.out.println("Próba zapisu planszy pod ścieżkę: " + path);
         chessboardWriter.save(currentBoard, path);
-        System.out.println("[Editor] Sukces zapisu!");
+        System.out.println("Sukces zapisu!");
     }
 }

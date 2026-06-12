@@ -8,57 +8,61 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static com.app.Workflow.executeWorkflow;
+
 public class MainCustomDoubles {
 
     public static void main(String[] args) throws InterruptedException {
         System.out.println("=== ZAAWANSOWANY POTOK TESTOWY: WŁASNE DUBLERY (ANALOGICZNY) ===");
 
-        // Uruchamiamy automatycznie 7 zróżnicowanych scenariuszy testowych
-        for (int scenario = 1; scenario <= 7; scenario++) {
-            System.out.println("\n----------------------------------------------------------------");
-            System.out.println(">>> URUCHAMIANIE SCENARIUSZA " + scenario + " <<<");
-            System.out.println("----------------------------------------------------------------");
+        ListOfScenarios list = new ListOfScenarios(Arrays.asList(1, 2, 3, 4, 5, 6, 7));
 
-            // Izolacja: Nowe instancje własnych dublerów zamiast mock()
+        // Za pomocą własnych dublerów tworzymy dynamiczne makiety dla wszystkich zależności, które chcemy kontrolować i iterujemy po nich
+        for (int scenario : list.getScenarios()) {
+            System.out.println("");
+            System.out.println("=== SCENARIUSZ " + scenario + " ===");
+            System.out.println("");
+
             StubAttackCounter customCounter = new StubAttackCounter();
             StubAttackCalculator customCalculator = new StubAttackCalculator();
             FakeChessboard customStorage = new FakeChessboard();
 
-            // Konfiguracja specyficznych danych wyjściowych dla algorytmów i I/O przez dedykowany mechanizm
             configureAdvancedScenarios(scenario, customCounter, customCalculator, customStorage);
 
-            // Wstrzyknięcie dublerów do komponentu biznesowego (Storage obsługuje zapis i odczyt)
             ChessboardEditor editor = new ChessboardEditor(customCounter, customCalculator, customStorage, customStorage);
 
             try {
                 executeWorkflow(scenario, editor);
             } catch (IOException e) {
-                System.out.println("[PRZECHWYCONY BŁĄD SYSTEMU PLIKÓW W MAIN] " + e.getMessage());
+                System.out.println("BLAD W MAIN " + e.getMessage());
             }
 
             Thread.sleep(1000);
         }
-        System.out.println("\n=== PIPELINE ZAKOŃCZONY: PRZETESTOWANO 7 KOMPLETNYCH SCENARIUSZY ===");
+        System.out.println("\n=== PRZETESTOWANO WSZYSTKIE SCENARIUSZE ===");
     }
 
     private static void configureAdvancedScenarios(int scenario, StubAttackCounter counter, StubAttackCalculator calculator,
                                                    FakeChessboard storage) {
         switch (scenario) {
             case 1:
-                System.out.println("[Konfiguracja Double] Analiza pustej planszy.");
+                // SCENARIUSZ 1: Pusta szachownica
+                System.out.println("Test pustej tablicy.");
                 counter.stubValue(0);
                 calculator.stubPositions(Collections.emptyList());
                 break;
 
             case 2:
-                System.out.println("[Konfiguracja Double] Analiza pojedynczego pionka.");
+                // SCENARIUSZ 2: Pojedynczy pionek na szachownicy
+                System.out.println("Test pojedynczego pionka.");
                 counter.stubValue(2);
                 List<Position> pawnAttacks = Arrays.asList(new Position(3, 3), new Position(3, 5));
                 calculator.stubPositions(pawnAttacks);
                 break;
 
             case 3:
-                System.out.println("[Konfiguracja Double] Analiza skoczka na krawędzi (ograniczony zasięg).");
+                // SCENARIUSZ 3: Skoczek na brzegu szachownicy
+                System.out.println("Test skoczka na krawędzi.");
                 counter.stubValue(4);
                 List<Position> knightAttacks = Arrays.asList(
                         new Position(3, 2), new Position(4, 3),
@@ -68,7 +72,8 @@ public class MainCustomDoubles {
                 break;
 
             case 4:
-                System.out.println("[Konfiguracja Double] Analiza centralnie ustawionego Hetmana (Maksymalny zasięg).");
+                // SCENARIUSZ 4: Potężny zasięg Hetmana w centrum szachownicy
+                System.out.println("Test centralnie ustawionego hetmana");
                 counter.stubValue(27);
                 List<Position> queenAttacks = Arrays.asList(
                         new Position(4, 1), new Position(4, 2), new Position(4, 3),
@@ -79,7 +84,8 @@ public class MainCustomDoubles {
                 break;
 
             case 5:
-                System.out.println("[Konfiguracja Double] Analiza blokowania linii strzału (figura zasłonięta).");
+                // SCENARIUSZ 5: Kolizja i blokowanie linii ataku przez inne figury
+                System.out.println("Test blokowania linii.");
                 counter.stubValue(5);
                 List<Position> blockedAttacks = Arrays.asList(
                         new Position(1, 1), new Position(1, 2), new Position(1, 3)
@@ -88,71 +94,25 @@ public class MainCustomDoubles {
                 break;
 
             case 6:
-                System.out.println("[Konfiguracja Double] Poprawna analiza, ale wymuszenie błędu zapisu pliku.");
+                // SCENARIUSZ 6: Błąd zapisu przy poprawnym wyniku analizy
+                System.out.println("Poprawny test ruchu, ale wymuszenie błędu zapisu pliku.");
                 counter.stubValue(12);
                 calculator.stubPositions(List.of(new Position(5, 5)));
-
-                // Symulacja doThrow przez konfigurację zachowania Fake'a
                 storage.failOnWrite("/błędna_ścieżka/zapis.json",
                         new IOException("Krytyczny błąd zapisu: Niepoprawna ścieżka systemowa!"));
                 break;
 
             case 7:
-                System.out.println("[Konfiguracja Double] Odczyt z pliku zakończony sukcesem.");
+                // SCENARIUSZ 7: Załaduj gotowy układ z pliku z unikalnymi danymi analitycznymi
+                System.out.println("Odczyt z pliku zakończony sukcesem.");
                 Chessboard loadedBoard = new Chessboard();
                 loadedBoard.addPiece(new Position(8, 8), "Black King");
 
-                // Wstrzyknięcie gotowej planszy do pamięci wirtualnej
+
                 storage.addPredefinedBoard("/konfiguracje/partia_arcymistrzowska.json", loadedBoard);
                 counter.stubValue(42);
                 calculator.stubPositions(Arrays.asList(new Position(7, 7), new Position(7, 8)));
                 break;
-        }
-    }
-
-    private static void executeWorkflow(int scenario, ChessboardEditor editor) throws IOException {
-        // KROK 1: Inicjalizacja stanu szachownicy
-        if (scenario == 7) {
-            editor.loadBoard("/konfiguracje/partia_arcymistrzowska.json");
-        } else {
-            editor.createNewBoard();
-        }
-
-        // KROK 2: Rozstawienie figur adekwatnie do testowanego scenariusza obliczeniowego
-        switch (scenario) {
-            case 1:
-                System.out.println("[Test] Pozostawiamy planszę pustą.");
-                break;
-            case 2:
-                editor.placePiece(2, 4, "White Pawn");
-                break;
-            case 3:
-                editor.placePiece(1, 4, "White Knight");
-                break;
-            case 4:
-                editor.placePiece(4, 4, "White Queen");
-                break;
-            case 5:
-                editor.placePiece(1, 1, "White Rook");
-                editor.placePiece(1, 4, "White Pawn");
-                editor.placePiece(1, 8, "Black King");
-                break;
-            case 6:
-                editor.placePiece(5, 5, "Black Bishop");
-                break;
-            case 7:
-                System.out.println("[Test] Figury zostały zaimportowane z pliku zewnętrznego.");
-                break;
-        }
-
-        // KROK 3: Wywołanie i weryfikacja logiki analitycznej (Count & Calculate)
-        editor.executeAnalysis();
-
-        // KROK 4: Persystencja stanu końcowego
-        if (scenario == 6) {
-            editor.saveBoard("/błędna_ścieżka/zapis.json");
-        } else if (scenario != 7) {
-            editor.saveBoard("/pliki/szachownica_wynik_" + scenario + ".json");
         }
     }
 }
